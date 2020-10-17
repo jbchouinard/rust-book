@@ -1,16 +1,19 @@
-#[macro_use]
-extern crate simple_error;
-
 use std::env;
-use std::fs;
+use std::process;
 
-use minigrep::Config;
+use minigrep::{run, Config};
 
-fn main() -> Result<(), simple_error::SimpleError> {
+fn main() {
     let args: Vec<String> = env::args().collect();
-    let config = Config::from_args(&args)?;
-    let contents = try_with!(fs::read_to_string, config.filename());
-    println!("{:#?}", config);
-    println!("{}", contents);
-    Result::Ok(())
+    let config = Config::from_args(&args).unwrap_or_else(|err| {
+        eprintln!("Invalid arguments: {}", err);
+        process::exit(2);
+    });
+    match run(config) {
+        Ok(_) => process::exit(0),
+        Err(err) => {
+            eprintln!("Error: {}", err);
+            process::exit(1);
+        }
+    }
 }
